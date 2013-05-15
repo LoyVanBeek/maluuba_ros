@@ -4,11 +4,12 @@ import roslib; roslib.load_manifest('maluuba_ros')
 
 import maluuba_ros.srv
 
+import sys
+
 import rospy
 import std_msgs
 
 from maluuba_napi import client
-APIKEY = "n393BfPBw473QiFPzHBAfxxkKZAbc8QN"
 
 class Maluuba(object):
     """docstring for Interpreter"""
@@ -31,12 +32,11 @@ class Maluuba(object):
     def normalize(self, request):
         response = self.client.normalize(request.data)
 
-        
-        
-
 if __name__ == "__main__":
     rospy.init_node("maluuba_node")
 
-    m = Maluuba(APIKEY)
+    apikey = sys.argv[1]
+
+    m = Maluuba(apikey)
     
     rospy.spin()
