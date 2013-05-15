@@ -1,0 +1,16 @@
+<package>
+  <description brief="maluuba_ros">
+
+     maluuba_ros
+
+  </description>
+  <author>Loy</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/maluuba_ros</url>
+  <depend package="rospy"/>
+  <depend package="std_msgs"/>
+
+</package>
+
+
