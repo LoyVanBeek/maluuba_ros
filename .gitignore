@@ -1,4 +1,6 @@
 *.py[cod]
+srv_gen
+msg_gen
 
 # C extensions
 *.so
