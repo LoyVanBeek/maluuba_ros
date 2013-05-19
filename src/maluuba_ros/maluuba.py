@@ -32,7 +32,41 @@ class Maluuba(object):
         entities = response.entities
 
         if "contacts" in entities.keys():
-            entities["contacts"] = [contact["name"] for contact in entities["contacts"]] #translate contact-dict to list of names
+            #translate contact-dict to list of names
+            entities["contacts"] = [contact["name"] for contact in entities["contacts"]]
+        if "originalDate" in entities.keys():
+            pass
+        if "replacementDate" in entities.keys():
+            pass
+        if "originalTime" in entities.keys():
+            pass
+        if "replacementTime" in entities.keys():
+            pass
+        if "replacementDate" in entities.keys():
+            pass
+        if "duration" in entities.keys():
+            pass
+        if "dateRange" in entities.keys():
+            pass
+        if "timeRange" in entities.keys():
+            pass
+        if "lengthOfTime" in entities.keys():
+            pass
+        if "" in entities.keys():
+            pass
+        if "" in entities.keys():
+            pass
+        if "" in entities.keys():
+            pass
+        if "" in entities.keys():
+            pass
+        if "" in entities.keys():
+            pass
+        if "" in entities.keys():
+            pass
+        if "" in entities.keys():
+            pass
+
 
         ents = Entities(**entities)
 
