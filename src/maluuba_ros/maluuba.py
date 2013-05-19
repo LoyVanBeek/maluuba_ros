@@ -27,46 +27,71 @@ class Maluuba(object):
     def interpret(self, request):
         response = self.client.interpret(request.phrase)
 
-        import ipdb; ipdb.set_trace()
+        allFields = [   "album","rating","playlist","song","artist","station",
+                        "genre","originalTitle","replacementTitle","originalDate",
+                        "replacementDate","originalLocation","replacementLocation",
+                        "originalTime","replacementTime","contactName","deleteContactName",
+                        "duration","dateRange","timeRange","repeatDaysLength","lengthOfTime",
+                        "REPEATDAYS","meetingTitle","location","date","contacts","message",
+                        "subject","keyword","time","leaveLocation","destination","origin",
+                        "transitType","route","searchTerm","numPeople","appname",
+                        "contactField","contactFieldValue","mpaaRating","actor",
+                        "theatre","title","numTickets","departureTime","departureDay",
+                        "returnTime","returnDay","departing","carrier","sortOrder",
+                        "noReturn","child","adult","senior","price","luxury"]
+
+        intFields = ["rating", "numPeople", "numTickets", "child", "adult"]
+        timeFields = ["originalDate", "replacementDate", "originalTime", "replacementTime", "date", "time", "departureTime", "returnTime"]
+        floatFields = ["price"]
+        durationFields = ["duration"]
+        TimeRangeFields = ["dateRange", "timeRange"]
+        stringArrayFields = ["REPEATDAYS"]
+        specialFields = ["contacts"]
+
+        otherFields = list( set(allFields) -
+                            set(intFields) - 
+                            set(timeFields) - 
+                            set(floatFields) - 
+                            set(durationFields) - 
+                            set(TimeRangeFields) - 
+                            set(stringArrayFields)- 
+                            set(specialFields))
 
         entities = response.entities
 
+        for field in [field for field in intFields if field in entities.keys()]:
+            entities[field] = int(entities[field])
+        
+        for field in [field for field in floatFields if field in entities.keys()]:
+            if field in entities.keys():
+                entities[field] = float(entities[field])
+
+        #{u'timeRange': [{u'start': datetime.time(8, 0), u'end': datetime.time(10, 0)}], u'title': [u'meeting']}
+        for field in [field for field in TimeRangeFields if field in entities.keys()]:
+            if field in entities.keys():
+                _range  = entities[field][0]
+                start   = str(_range["start"])
+                end     = str(_range["end"])
+                entities[field] = TimeRange(start, end)
+
+        for field in [field for field in durationFields if field in entities.keys()]:
+            if field in entities.keys():
+                entities[field] = str(entities[field])
+
+        #Time as returned by Maluuba cannot be put in a ROS Time message.
+        for field in [field for field in timeFields if field in entities.keys()]:
+            if field in entities.keys():
+                entities[field] = str(entities[field])
+        
         if "contacts" in entities.keys():
             #translate contact-dict to list of names
             entities["contacts"] = [contact["name"] for contact in entities["contacts"]]
-        if "originalDate" in entities.keys():
-            pass
-        if "replacementDate" in entities.keys():
-            pass
-        if "originalTime" in entities.keys():
-            pass
-        if "replacementTime" in entities.keys():
-            pass
-        if "replacementDate" in entities.keys():
-            pass
-        if "duration" in entities.keys():
-            pass
-        if "dateRange" in entities.keys():
-            pass
-        if "timeRange" in entities.keys():
-            pass
-        if "lengthOfTime" in entities.keys():
-            pass
-        if "" in entities.keys():
-            pass
-        if "" in entities.keys():
-            pass
-        if "" in entities.keys():
-            pass
-        if "" in entities.keys():
-            pass
-        if "" in entities.keys():
-            pass
-        if "" in entities.keys():
-            pass
-        if "" in entities.keys():
-            pass
+        
+        for field in [field for field in stringArrayFields if field in entities.keys()]:
+            entities[field] = [str(item) for item in entities[field]]
 
+        for field in [field for field in otherFields if field in entities.keys()]:
+            entities[field] = [str(value) for value in entities[field]][0]
 
         ents = Entities(**entities)
 
