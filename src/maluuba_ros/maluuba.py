@@ -3,6 +3,7 @@
 import roslib; roslib.load_manifest('maluuba_ros')
 
 import maluuba_ros.srv
+from maluuba_ros.msg import Entities, TimeRange
 
 import sys
 
@@ -26,8 +27,17 @@ class Maluuba(object):
     def interpret(self, request):
         response = self.client.interpret(request.phrase)
 
+        import ipdb; ipdb.set_trace()
+
+        entities = response.entities
+
+        if "contacts" in entities.keys():
+            entities["contacts"] = [contact["name"] for contact in entities["contacts"]] #translate contact-dict to list of names
+
+        ents = Entities(**entities)
+
         return maluuba_ros.srv.InterpretResponse(
-            str(response.entities), 
+            ents, 
             str(response.category), 
             str(response.action))
 
