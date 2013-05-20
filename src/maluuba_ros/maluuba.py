@@ -3,7 +3,7 @@
 import roslib; roslib.load_manifest('maluuba_ros')
 
 import maluuba_ros.srv
-from maluuba_ros.msg import Entities, TimeRange
+from maluuba_ros.msg import Entities, TimeRange, Contact
 
 import sys
 
@@ -32,21 +32,22 @@ class Maluuba(object):
                         "replacementDate","originalLocation","replacementLocation",
                         "originalTime","replacementTime","contactName","deleteContactName",
                         "duration","dateRange","timeRange","repeatDaysLength","lengthOfTime",
-                        "REPEATDAYS","meetingTitle","location","date","contacts","message",
+                        "repeatDays","meetingTitle","location","date","contacts","message",
                         "subject","keyword","time","leaveLocation","destination","origin",
                         "transitType","route","searchTerm","numPeople","appName",
                         "contactField","contactFieldValue","mpaaRating","actor",
                         "theatre","title","numTickets","departureTime","departureDay",
                         "returnTime","returnDay","departing","carrier","sortOrder",
-                        "noReturn","child","adult","senior","price","luxury"]
+                        "noReturn","child","adult","senior","price","luxury","event"]
 
         intFields = ["rating", "numPeople", "numTickets", "child", "adult"]
         timeFields = ["originalDate", "replacementDate", "originalTime", "replacementTime", "date", "time", "departureTime", "returnTime"]
         floatFields = ["price"]
         durationFields = ["duration"]
         TimeRangeFields = ["dateRange", "timeRange"]
-        stringArrayFields = ["REPEATDAYS"]
-        specialFields = ["contacts"]
+        ContactFields = ["contacts"]
+        stringArrayFields = ["repeatDays"]
+        specialFields = ["repeatDays", "luxury"]
 
         otherFields = list( set(allFields) -
                             set(intFields) - 
@@ -54,51 +55,68 @@ class Maluuba(object):
                             set(floatFields) - 
                             set(durationFields) - 
                             set(TimeRangeFields) - 
+                            set(ContactFields)- 
                             set(stringArrayFields)- 
                             set(specialFields))
 
         entities = response.entities
 
-        for field in [field for field in intFields if field in entities.keys()]:
-            entities[field] = int(entities[field])
-        
-        for field in [field for field in floatFields if field in entities.keys()]:
-            if field in entities.keys():
-                entities[field] = float(entities[field])
+        try:
+            if "REPEATDAYS" in entities.keys():
+                entities["repeatDays"] = entities["REPEATDAYS"]
+                entities.pop("REPEATDAYS", None)
+            
+            if "LUXURY" in entities.keys():
+                #import ipdb; ipdb.set_trace()
+                entities["luxury"] = entities["LUXURY"][0]
+                entities.pop("LUXURY", None)
 
-        #{u'timeRange': [{u'start': datetime.time(8, 0), u'end': datetime.time(10, 0)}], u'title': [u'meeting']}
-        for field in [field for field in TimeRangeFields if field in entities.keys()]:
-            if field in entities.keys():
-                _range  = entities[field][0]
-                start   = str(_range["start"])
-                end     = str(_range["end"])
-                entities[field] = TimeRange(start, end)
+            for field in [field for field in intFields if field in entities.keys()]:
+                entities[field] = int(entities[field][0])
+            
+            for field in [field for field in floatFields if field in entities.keys()]:
+                if field in entities.keys():
+                    entities[field] = float(entities[field])
 
-        for field in [field for field in durationFields if field in entities.keys()]:
-            if field in entities.keys():
-                entities[field] = str(entities[field])
+            #{u'timeRange': [{u'start': datetime.time(8, 0), u'end': datetime.time(10, 0)}], u'title': [u'meeting']}
+            for field in [field for field in TimeRangeFields if field in entities.keys()]:
+                if field in entities.keys():
+                    _range  = entities[field][0]
+                    start   = str(_range["start"])
+                    end     = str(_range["end"])
+                    entities[field] = TimeRange(start, end)
 
-        #Time as returned by Maluuba cannot be put in a ROS Time message.
-        for field in [field for field in timeFields if field in entities.keys()]:
-            if field in entities.keys():
-                entities[field] = str(entities[field])
-        
-        if "contacts" in entities.keys():
-            #translate contact-dict to list of names
-            entities["contacts"] = [contact["name"] for contact in entities["contacts"]]
-        
-        for field in [field for field in stringArrayFields if field in entities.keys()]:
-            entities[field] = [str(item) for item in entities[field]]
+            for field in [field for field in durationFields if field in entities.keys()]:
+                if field in entities.keys():
+                    entities[field] = str(entities[field])
 
-        for field in [field for field in otherFields if field in entities.keys()]:
-            entities[field] = [str(value) for value in entities[field]][0]
+            #Time as returned by Maluuba cannot be put in a ROS Time message.
+            for field in [field for field in timeFields if field in entities.keys()]:
+                if field in entities.keys():
+                    entities[field] = str(entities[field])
 
-        ents = Entities(**entities)
+            if "contacts" in entities.keys():
+                #import ipdb;ipdb.set_trace()
+                #TODO: there is a dict for each contact, so this code makes multiple contacts.
+                entities["contacts"] = [Contact(**contact) for contact in entities["contacts"]]
+            
+            for field in [field for field in stringArrayFields if field in entities.keys()]:
+                entities[field] = [str(item) for item in entities[field]]
 
-        return maluuba_ros.srv.InterpretResponse(
-            ents, 
-            str(response.category), 
-            str(response.action))
+            for field in [field for field in otherFields if field in entities.keys()]:
+                entities[field] = [str(value) for value in entities[field]][0]
+
+            ents = Entities(**entities)
+
+            return maluuba_ros.srv.InterpretResponse(
+                ents, 
+                str(response.category), 
+                str(response.action))
+
+        except Exception, e:
+            rospy.logerr("Phrase '{0}' yields exception: '{1}'. Response: {2.entities}, {2.category}, {2.action}".format(request.phrase, e, response))
+            raise
+            #import ipdb; ipdb.set_trace()
 
     def default_parser(self, entities):
         return str(entities)

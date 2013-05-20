@@ -21,11 +21,11 @@ TimeRange   dateRange            #calendar, weather, business, theatre
 TimeRange   timeRange            #calendar, transit, business        
 string      repeatDaysLength     #calendar                           
 string      lengthOfTime         #calendar                   #WAS of tye 'duration'
-string[]    REPEATDAYS           #calendar, alarm         
+string[]    repeatDays           #calendar, alarm         
 string      meetingTitle         #calendar                   
 string      location             #calendar, weather, reminder, transit       
 string      date                 #calendar, reminder, alarm, transit   #WAS of type 'time'
-string[]    contacts             #email, message, call, contact       
+Contact[]   contacts             #email, message, call, contact       
 string      message              #email,message,reminder   
 string      subject              #email   
 string      keyword              #email   
@@ -57,4 +57,5 @@ uint32      child                #travel
 uint32      adult                #travel   
 string      senior               #travel   
 float32     price                #travel   
-string      luxury               #travel   
+string      luxury               #travel  
+string      event                #entertainment #Not listed in API docs

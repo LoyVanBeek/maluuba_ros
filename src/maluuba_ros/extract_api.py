@@ -2,6 +2,14 @@
 
 from BeautifulSoup import BeautifulSoup
 import requests
+
+import roslib
+roslib.load_manifest('maluuba_ros')
+import rospy
+import maluuba_ros.srv
+from maluuba_ros.msg import TimeRange
+
+service = rospy.ServiceProxy("/maluuba/interpret", maluuba_ros.srv.Interpret)
     
 def parse_table_bs(tableSoup):
     rows = tableSoup.findChildren("tr")
@@ -46,11 +54,36 @@ def extract_examples(catPageSoup):
         examples = text.split(",")
         for ex in examples: yield ex
 
+fails = []
+
 for category, cat_url in categories.iteritems():
     text = requests.get(cat_url).text
     catSoup = BeautifulSoup(text)
     for example in extract_examples(catSoup):
-        print example
+        try:
+            response = service(example)
+            print example
+            print response.action, " - " ,response.category
+            fields = response.entities.__slots__
+            for key in fields:
+                value = response.entities.__getattribute__(key)
+                if value:
+                    #import ipdb;ipdb.set_trace()
+                    if isinstance(value, TimeRange):
+                        if value.start:
+                            print key,value
+                    else:
+                        print key, value
+            print "-"*10
+        except Exception, e:
+            print example
+            print e
+            print "*"*10
+            fails += [example]
+
+print fails
+
+
 
 
 
