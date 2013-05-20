@@ -8,28 +8,28 @@ string      station              #music
 string      genre                #music, theatre   
 string      originalTitle        #calendar                   
 string      replacementTitle     #calendar                           
-string        originalDate         #calendar                   #WAS of type 'time'
-string        replacementDate      #calendar                   #WAS of type 'time'
+string      originalDate         #calendar                   #WAS of type 'time'
+string      replacementDate      #calendar                   #WAS of type 'time'
 string      originalLocation     #calendar                           
 string      replacementLocation  #calendar                           
-string        originalTime         #calendar                   #WAS of type 'time'
-string        replacementTime      #calendar                   #WAS of type 'time'
+string      originalTime         #calendar                   #WAS of type 'time'
+string      replacementTime      #calendar                   #WAS of type 'time'
 string      contactName          #calendar           
 string      deleteContactName    #calendar                           
-string    duration             #calendar           #WAS of tye 'duration'
+string      duration             #calendar           #WAS of tye 'duration'
 TimeRange   dateRange            #calendar, weather, business, theatre           
 TimeRange   timeRange            #calendar, transit, business        
 string      repeatDaysLength     #calendar                           
-string    lengthOfTime         #calendar                   #WAS of tye 'duration'
+string      lengthOfTime         #calendar                   #WAS of tye 'duration'
 string[]    REPEATDAYS           #calendar, alarm         
 string      meetingTitle         #calendar                   
 string      location             #calendar, weather, reminder, transit       
-string        date                 #calendar, reminder, alarm, transit   #WAS of type 'time'
+string      date                 #calendar, reminder, alarm, transit   #WAS of type 'time'
 string[]    contacts             #email, message, call, contact       
 string      message              #email,message,reminder   
 string      subject              #email   
 string      keyword              #email   
-string        time                 #weather, reminder, alarm, timer   #WAS of type 'time'
+string      time                 #weather, reminder, alarm, timer   #WAS of type 'time'
 string      leaveLocation        #reminder           
 string      destination          #navigation, travel   
 string      origin               #navigation   
@@ -37,7 +37,7 @@ string      transitType          #navigation, transit
 string      route                #transit   
 string      searchTerm           #search, social, business       
 uint32      numPeople            #social, business       
-string      appname              #application   
+string      appName              #application   
 string      contactField         #contact           
 string      contactFieldValue    #contact               
 string      mpaaRating           #theatre       
@@ -45,9 +45,9 @@ string      actor                #theatre
 string      theatre              #theatre   
 string      title                #theatre   
 uint32      numTickets           #theatre       
-string        departureTime        #travel           #WAS of type 'time'
+string      departureTime        #travel           #WAS of type 'time'
 string      departureDay         #travel           
-string        returnTime           #travel       #WAS of type 'time'
+string      returnTime           #travel       #WAS of type 'time'
 string      returnDay            #travel     
 string      departing            #travel       
 string      carrier              #travel   

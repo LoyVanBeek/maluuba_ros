@@ -34,7 +34,7 @@ class Maluuba(object):
                         "duration","dateRange","timeRange","repeatDaysLength","lengthOfTime",
                         "REPEATDAYS","meetingTitle","location","date","contacts","message",
                         "subject","keyword","time","leaveLocation","destination","origin",
-                        "transitType","route","searchTerm","numPeople","appname",
+                        "transitType","route","searchTerm","numPeople","appName",
                         "contactField","contactFieldValue","mpaaRating","actor",
                         "theatre","title","numTickets","departureTime","departureDay",
                         "returnTime","returnDay","departing","carrier","sortOrder",
