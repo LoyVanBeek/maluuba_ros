@@ -3,5 +3,4 @@ string type
 string timezone
 ---
 string entities
-string category
-string action
+string context
