@@ -18,4 +18,4 @@ $ rosservice call /maluuba/interpret "Remind me to get the eggs in 3 minutes"
 
 It will return a giant ROS message with all maluuba entities.
 
-#TODO: find a better way to store entities in a ROS message.
+TODO: find a better way to store entities in a ROS message.
