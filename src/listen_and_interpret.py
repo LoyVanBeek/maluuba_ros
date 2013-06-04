@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+'''Run ~/ros/fuerte/tue/user/sjoerd/google_speech_to_text/src recognizer.py, this works best somehow. Very experimental'''
+
 import roslib; roslib.load_manifest('maluuba_ros')
 import rospy
 
