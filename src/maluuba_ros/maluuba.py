@@ -68,14 +68,21 @@ class Maluuba(object):
                 entities.pop("REPEATDAYS", None)
             
             if "LUXURY" in entities.keys():
-                #import ipdb; ipdb.set_trace()
                 entities["luxury"] = entities["LUXURY"][0]
                 entities.pop("LUXURY", None)
 
             if "contacts" in entities.keys():
-                #import ipdb;ipdb.set_trace()
                 #TODO: there is a dict for each contact, so this code makes multiple contacts.
-                entities["contacts"] = [Contact(**contact) for contact in entities["contacts"]]
+
+                #Replace the phone_NUMBER-key by phoneNumber
+                contact_entities = entities["contacts"]
+                entities["contacts"] = []
+                for contact in contact_entities:
+                    if "phone_NUMBER" in contact.keys():
+                        contact["phoneNumber"] = contact["phone_NUMBER"]
+                        contact.pop("phone_NUMBER", None)
+                    #import ipdb;ipdb.set_trace()
+                    entities["contacts"] += [Contact(**contact)]
 
             for field in [field for field in intFields if field in entities.keys()]:
                 entities[field] = int(entities[field][0])
@@ -132,7 +139,17 @@ class Maluuba(object):
 if __name__ == "__main__":
     rospy.init_node("maluuba_node")
 
-    apikey = sys.argv[1]
+    apikey = ""
+    try:
+        apikey = sys.argv[1]
+    except IndexError:
+        try:
+            keyfile = open("KEYFILE")
+            apikey = keyfile.readline()
+            apikey = apikey.strip()
+        except IOError:
+            rospy.logerr("No API key given as first argument and no file KEYFILE found. Please give one of the two.")
+            exit(-1)
 
     m = Maluuba(apikey)
     
