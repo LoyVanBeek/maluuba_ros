@@ -1,9 +1,12 @@
 #!/usr/bin/env python
+"""ROS node for the Maluuba nAPI. Takes phrases from a rosservice, puts these through the API 
+and encodes these is a ROS service response."""
 
-import roslib; roslib.load_manifest('maluuba_ros')
+import roslib
+roslib.load_manifest('maluuba_ros')
 
-import maluuba_ros.srv
-from maluuba_ros.msg import Entities, TimeRange, Contact
+from maluuba_ros.srv import Interpret, InterpretResponse, NormalizeResponse, Normalize
+from maluuba_ros.msg import Entities, TimeRange, Contact, Interpretation
 
 import sys
 
@@ -11,21 +14,22 @@ import rospy
 
 from maluuba_napi import client
 
-allFields = [   "album","rating","playlist","song","artist","station",
-                "genre","originalTitle","replacementTitle","originalDate",
-                "replacementDate","originalLocation","replacementLocation",
-                "originalTime","replacementTime","contactName","deleteContactName",
-                "duration","dateRange","timeRange","repeatDaysLength","lengthOfTime",
-                "repeatDays","meetingTitle","location","date","contacts","message",
-                "subject","keyword","time","leaveLocation","destination","origin",
-                "transitType","route","searchTerm","numPeople","appName",
-                "contactField","contactFieldValue","mpaaRating","actor",
-                "theatre","title","numTickets","departureTime","departureDay",
-                "returnTime","returnDay","departing","carrier","sortOrder",
-                "noReturn","child","adult","senior","price","luxury","event"]
+allFields = ["album", "rating", "playlist", "song", "artist", "station",
+             "genre", "originalTitle", "replacementTitle", "originalDate",
+             "replacementDate", "originalLocation", "replacementLocation",
+             "originalTime", "replacementTime", "contactName", "deleteContactName",
+             "duration", "dateRange", "timeRange", "repeatDaysLength", "lengthOfTime",
+             "repeatDays", "meetingTitle", "location", "date", "contacts", "message",
+             "subject", "keyword", "time", "leaveLocation", "destination", "origin",
+             "transitType", "route", "searchTerm", "numPeople", "appName",
+             "contactField", "contactFieldValue", "mpaaRating", "actor",
+             "theatre", "title", "numTickets", "departureTime", "departureDay",
+             "returnTime", "returnDay", "departing", "carrier", "sortOrder",
+             "noReturn", "child", "adult", "senior", "price", "luxury", "event"]
 
 intFields = ["rating", "numPeople", "numTickets", "child", "adult"]
-timeFields = ["originalDate", "replacementDate", "originalTime", "replacementTime", "date", "time", "departureTime", "returnTime"]
+timeFields = ["originalDate", "replacementDate", "originalTime",
+              "replacementTime", "date", "time", "departureTime", "returnTime"]
 floatFields = ["price"]
 durationFields = ["duration"]
 TimeRangeFields = ["dateRange", "timeRange"]
@@ -33,15 +37,15 @@ ContactFields = ["contacts"]
 stringArrayFields = ["repeatDays"]
 specialFields = ["repeatDays", "luxury"]
 
-otherFields = list( set(allFields) -
-                    set(intFields) - 
-                    set(timeFields) - 
-                    set(floatFields) - 
-                    set(durationFields) - 
-                    set(TimeRangeFields) - 
-                    set(ContactFields)- 
-                    set(stringArrayFields)- 
-                    set(specialFields))
+otherFields = list(set(allFields) -
+                   set(intFields) -
+                   set(timeFields) -
+                   set(floatFields) -
+                   set(durationFields) -
+                   set(TimeRangeFields) -
+                   set(ContactFields) -
+                   set(stringArrayFields) -
+                   set(specialFields))
 
 
 class Maluuba(object):
@@ -51,13 +55,18 @@ class Maluuba(object):
         c = client.NAPIClient(key)
         super(Maluuba, self).__init__()
         self.client = c
-    
-        rospy.Service('maluuba/interpret', maluuba_ros.srv.Interpret, self.interpret)
-        rospy.Service('maluuba/normalize', maluuba_ros.srv.Normalize, self.normalize)
 
-        self.processors = {"REMINDER_SET":self._parse_REMINDER_SET}
+        rospy.Service(
+            'maluuba/interpret', Interpret, self.interpret)
+        rospy.Service(
+            'maluuba/normalize', Normalize, self.normalize)
 
     def interpret(self, request):
+        """Interprets a phrase via the maluuba nAPI. 
+        The response packs the orignal phrase as well, 
+        so users of the interpretation get a complete package."""
+        rospy.loginfo("Interpreting '{0}'".format(request.phrase))
+        
         response = self.client.interpret(request.phrase)
 
         entities = response.entities
@@ -66,47 +75,48 @@ class Maluuba(object):
             if "REPEATDAYS" in entities.keys():
                 entities["repeatDays"] = entities["REPEATDAYS"]
                 entities.pop("REPEATDAYS", None)
-            
+
             if "LUXURY" in entities.keys():
                 entities["luxury"] = entities["LUXURY"][0]
                 entities.pop("LUXURY", None)
 
             if "contacts" in entities.keys():
-                #TODO: there is a dict for each contact, so this code makes multiple contacts.
+                # TODO: there is a dict for each contact, so this code makes
+                # multiple contacts.
 
-                #Replace the phone_NUMBER-key by phoneNumber
+                # Replace the phone_NUMBER-key by phoneNumber
                 contact_entities = entities["contacts"]
                 entities["contacts"] = []
                 for contact in contact_entities:
                     if "phone_NUMBER" in contact.keys():
                         contact["phoneNumber"] = contact["phone_NUMBER"]
                         contact.pop("phone_NUMBER", None)
-                    #import ipdb;ipdb.set_trace()
+                    # import ipdb;ipdb.set_trace()
                     entities["contacts"] += [Contact(**contact)]
 
             for field in [field for field in intFields if field in entities.keys()]:
                 entities[field] = int(entities[field][0])
-            
+
             for field in [field for field in floatFields if field in entities.keys()]:
                 if field in entities.keys():
                     entities[field] = float(entities[field])
 
             for field in [field for field in TimeRangeFields if field in entities.keys()]:
                 if field in entities.keys():
-                    _range  = entities[field][0]
-                    start   = str(_range["start"])
-                    end     = str(_range["end"])
+                    _range = entities[field][0]
+                    start = str(_range["start"])
+                    end = str(_range["end"])
                     entities[field] = TimeRange(start, end)
 
             for field in [field for field in durationFields if field in entities.keys()]:
                 if field in entities.keys():
                     entities[field] = str(entities[field])
 
-            #Time as returned by Maluuba cannot be put in a ROS Time message.
+            # Time as returned by Maluuba cannot be put in a ROS Time message.
             for field in [field for field in timeFields if field in entities.keys()]:
                 if field in entities.keys():
                     entities[field] = str(entities[field])
-            
+
             for field in [field for field in stringArrayFields if field in entities.keys()]:
                 entities[field] = [str(item) for item in entities[field]]
 
@@ -115,24 +125,25 @@ class Maluuba(object):
 
             ents = Entities(**entities)
 
-            return maluuba_ros.srv.InterpretResponse(
-                ents, 
-                str(response.category), 
-                str(response.action))
+            return InterpretResponse(
+                        Interpretation(ents, 
+                            str(response.category), 
+                            str(response.action), 
+                            request.phrase))
 
         except Exception, e:
-            rospy.logerr("Phrase '{0}' yields exception: '{1}'. Response: {2.entities}, {2.category}, {2.action}".format(request.phrase, e, response))
+            rospy.logerr("Phrase '{0}' yields exception: '{1}'. Response: {2.entities}, {2.category}, {2.action}".format(
+                request.phrase, e, response))
             raise
 
-    def _parse_REMINDER_SET(self, entities):
-        pass
-
     def normalize(self, request):
-        #import ipdb; ipdb.set_trace()
-        response = self.client.normalize(request.phrase, request.type, request.timezone)
+        """Normalize a phrase. For example, 'tomorrow' is normalized to a DateTime"""
+        # import ipdb; ipdb.set_trace()
+        response = self.client.normalize(
+            request.phrase, request.type, request.timezone)
 
-        return maluuba_ros.srv.NormalizeResponse(
-            str(response.entities), 
+        return NormalizeResponse(
+            str(response.entities),
             str(response.context))
 
 
@@ -148,9 +159,10 @@ if __name__ == "__main__":
             apikey = keyfile.readline()
             apikey = apikey.strip()
         except IOError:
-            rospy.logerr("No API key given as first argument and no file KEYFILE found. Please give one of the two.")
+            rospy.logerr(
+                "No API key given as first argument and no file KEYFILE found. Please give one of the two.")
             exit(-1)
 
     m = Maluuba(apikey)
-    
+
     rospy.spin()

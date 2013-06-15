@@ -1,5 +1,3 @@
 string phrase
 ---
-Entities entities
-string category
-string action
+Interpretation interpretation

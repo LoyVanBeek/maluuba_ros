@@ -30,6 +30,6 @@ def interpret_string(msg):
     except Exception, e:
         rospy.logerr(e)
 
-subcriber = rospy.Subscriber("/speech/output", String, interpret_string)
+subscriber = rospy.Subscriber("/speech/output", String, interpret_string)
 
 rospy.spin()
