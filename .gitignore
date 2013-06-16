@@ -1,3 +1,5 @@
+config/mailconfig.yaml
+
 *.py[cod]
 srv_gen
 msg_gen

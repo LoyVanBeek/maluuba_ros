@@ -1,0 +1,8 @@
+sender: YOUR_EMAIL
+password: PASSWORD
+---
+someone:
+    email: "someone@gmail.com"
+
+someotherperson:
+    email: "someotherperson@tue.nl"

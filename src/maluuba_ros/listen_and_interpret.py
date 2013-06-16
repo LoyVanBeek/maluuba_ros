@@ -16,6 +16,8 @@ publisher = rospy.Publisher("maluuba/interpretations", Interpretation)
 
 
 def interpret_string(msg):
+    #import pdb; pdb.set_trace()
+    rospy.loginfo("Heard '{0}'".format(msg.data))
     try:
         response = service(msg.data)
         interpretation = response.interpretation
@@ -24,7 +26,7 @@ def interpret_string(msg):
         display = "\n".join(
             line for line in lines if "''" not in line and '[]' not in line)
         
-        rospy.logdebug(display)
+        rospy.loginfo(display)
         publisher.publish(interpretation)
 
     except Exception, e:

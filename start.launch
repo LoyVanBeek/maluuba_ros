@@ -1,0 +1,9 @@
+<launch>
+  <node name="maluuba" pkg="maluuba_ros" type="maluuba.py"  args="$(find maluuba_ros)/config/KEYFILE"/>
+  <node name="listener" pkg="maluuba_ros" type="listen_and_interpret.py"/>
+  <node name="mailer" pkg="maluuba_ros" type="interpret_email.py" args="$(find maluuba_ros)/config/mailconfig.yaml"/>
+  <!--
+    Send commands via 
+  rostopic pub /speech/output std_msgs/String "Send an email to janno about maluuba with the text maluuba rocks" \-\-once 
+    -->
+</launch>

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""ROS node for the Maluuba nAPI. Takes phrases from a rosservice, puts these through the API 
+"""ROS node for the Maluuba nAPI. Takes phrases from a rosservice, puts these through the API
 and encodes these is a ROS service response."""
 
 import roslib
@@ -49,6 +49,7 @@ otherFields = list(set(allFields) -
 
 
 class Maluuba(object):
+
     """Wrapper for the Maluuba natural language understanding API.
     the nAPI supports two services, interpret and normalize. """
     def __init__(self, key):
@@ -62,11 +63,11 @@ class Maluuba(object):
             'maluuba/normalize', Normalize, self.normalize)
 
     def interpret(self, request):
-        """Interprets a phrase via the maluuba nAPI. 
-        The response packs the orignal phrase as well, 
+        """Interprets a phrase via the maluuba nAPI.
+        The response packs the orignal phrase as well,
         so users of the interpretation get a complete package."""
         rospy.loginfo("Interpreting '{0}'".format(request.phrase))
-        
+
         response = self.client.interpret(request.phrase)
 
         entities = response.entities
@@ -126,12 +127,12 @@ class Maluuba(object):
             ents = Entities(**entities)
 
             return InterpretResponse(
-                        Interpretation(ents, 
-                            str(response.category), 
-                            str(response.action), 
-                            request.phrase))
+                Interpretation(ents,
+                               str(response.category),
+                               str(response.action),
+                               request.phrase))
 
-        except Exception, e:
+        except Exception as e:
             rospy.logerr("Phrase '{0}' yields exception: '{1}'. Response: {2.entities}, {2.category}, {2.action}".format(
                 request.phrase, e, response))
             raise
@@ -148,20 +149,18 @@ class Maluuba(object):
 
 
 if __name__ == "__main__":
+    import sys
     rospy.init_node("maluuba_node")
 
     apikey = ""
     try:
-        apikey = sys.argv[1]
-    except IndexError:
-        try:
-            keyfile = open("KEYFILE")
-            apikey = keyfile.readline()
-            apikey = apikey.strip()
-        except IOError:
-            rospy.logerr(
-                "No API key given as first argument and no file KEYFILE found. Please give one of the two.")
-            exit(-1)
+        keyfile = open(sys.argv[1])
+        apikey = keyfile.readline()
+        apikey = apikey.strip()
+    except IOError:
+        rospy.logerr(
+            "First argument must be a file containing a Maluuba API key")
+        exit(-1)
 
     m = Maluuba(apikey)
 
