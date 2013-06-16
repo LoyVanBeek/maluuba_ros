@@ -8,12 +8,12 @@ string      station              #music
 string      genre                #music, theatre   
 string      originalTitle        #calendar                   
 string      replacementTitle     #calendar                           
-string      originalDate         #calendar                   #WAS of type 'time'
-string      replacementDate      #calendar                   #WAS of type 'time'
+uint32      originalDate         #calendar                   #WAS of type 'time'
+uint32      replacementDate      #calendar                   #WAS of type 'time'
 string      originalLocation     #calendar                           
 string      replacementLocation  #calendar                           
-string      originalTime         #calendar                   #WAS of type 'time'
-string      replacementTime      #calendar                   #WAS of type 'time'
+uint32      originalTime         #calendar                   #WAS of type 'time'
+uint32      replacementTime      #calendar                   #WAS of type 'time'
 string      contactName          #calendar           
 string      deleteContactName    #calendar                           
 string      duration             #calendar           #WAS of tye 'duration'
@@ -29,7 +29,7 @@ Contact[]   contacts             #email, message, call, contact
 string      message              #email,message,reminder   
 string      subject              #email   
 string      keyword              #email   
-string      time                 #weather, reminder, alarm, timer   #WAS of type 'time'
+uint32      time                 #weather, reminder, alarm, timer   #WAS of type 'time'
 string      leaveLocation        #reminder           
 string      destination          #navigation, travel   
 string      origin               #navigation   
@@ -45,9 +45,9 @@ string      actor                #theatre
 string      theatre              #theatre   
 string      title                #theatre   
 uint32      numTickets           #theatre       
-string      departureTime        #travel           #WAS of type 'time'
-string      departureDay         #travel           
-string      returnTime           #travel       #WAS of type 'time'
+uint32      departureTime        #travel           #WAS of type 'time'
+uint32      departureDay         #travel           
+uint32      returnTime           #travel       #WAS of type 'time'
 string      returnDay            #travel     
 string      departing            #travel       
 string      carrier              #travel   

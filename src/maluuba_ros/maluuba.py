@@ -11,6 +11,7 @@ from maluuba_ros.msg import Entities, TimeRange, Contact, Interpretation
 import sys
 
 import rospy
+from dateutil import parser
 
 from maluuba_napi import client
 
@@ -116,7 +117,12 @@ class Maluuba(object):
             # Time as returned by Maluuba cannot be put in a ROS Time message.
             for field in [field for field in timeFields if field in entities.keys()]:
                 if field in entities.keys():
-                    entities[field] = str(entities[field])
+                    #import ipdb; ipdb.set_trace()
+                    timestr = entities[field][0]
+                    dt = parser.parse(timestr)
+                    stamp = dt.strftime("%s")
+                    since_epoch = int(stamp)
+                    entities[field] = since_epoch
 
             for field in [field for field in stringArrayFields if field in entities.keys()]:
                 entities[field] = [str(item) for item in entities[field]]
