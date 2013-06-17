@@ -101,7 +101,8 @@ class MailInterpreter(object):
             self.sendmail(subject, message, list(receivers))
 
         elif msg.action == "REMINDER_SET":
-            receivers = ["loy.vanbeek@gmail.com"]#set([self.address_book.get(contact.name.lower(), self.mailadress) for contact in msg.entities.contacts])
+            receivers = [self.mailadress] #set([self.address_book.get(contact.name.lower(), self.mailadress) for contact in msg.entities.contacts])
+
             
             message = msg.entities.message if msg.entities.message else "reminder"
 
@@ -110,7 +111,7 @@ class MailInterpreter(object):
             import ipdb; ipdb.set_trace()
             from dateutil import tz
             start = datetime.fromtimestamp(msg.entities.time)
-            from_zone = tz.gettz('UTC')
+            from_zone = tz.gettz('America/Montreal')
             to_zone = tz.gettz('Europe/Amsterdam')
             start = start.replace(tzinfo=from_zone)
             start = start.astimezone(to_zone)
