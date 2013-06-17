@@ -106,8 +106,9 @@ class Maluuba(object):
             for field in [field for field in TimeRangeFields if field in entities.keys()]:
                 if field in entities.keys():
                     _range = entities[field][0]
-                    start = str(_range["start"])
-                    end = str(_range["end"])
+                    #import ipdb; ipdb.set_trace()
+                    start = self.time_to_int(_range["start"])
+                    end = self.time_to_int(_range["end"])
                     entities[field] = TimeRange(start, end)
 
             for field in [field for field in durationFields if field in entities.keys()]:
@@ -117,11 +118,9 @@ class Maluuba(object):
             # Time as returned by Maluuba cannot be put in a ROS Time message.
             for field in [field for field in timeFields if field in entities.keys()]:
                 if field in entities.keys():
-                    #import ipdb; ipdb.set_trace()
-                    timestr = entities[field][0]
-                    dt = parser.parse(timestr)
-                    stamp = dt.strftime("%s")
-                    since_epoch = int(stamp)
+                    from dateutil import parser
+                    dt = parser.parse(entities[field][0])
+                    since_epoch = self.time_to_int(dt)
                     entities[field] = since_epoch
 
             for field in [field for field in stringArrayFields if field in entities.keys()]:
@@ -152,6 +151,13 @@ class Maluuba(object):
         return NormalizeResponse(
             str(response.entities),
             str(response.context))
+
+    @staticmethod
+    def time_to_int(entity):
+        #import ipdb; ipdb.set_trace()
+        stamp = entity.strftime("%s")
+        since_epoch = int(stamp)
+        return since_epoch
 
 
 if __name__ == "__main__":

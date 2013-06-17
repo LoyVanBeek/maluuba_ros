@@ -7,10 +7,11 @@ roslib.load_manifest('maluuba_ros')
 import os
 import rospy
 import yaml
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from maluuba_ros.msg import Interpretation
 from maluuba_ros.srv import Normalize, NormalizeResponse
+
 
 def make_ical(startdate, summary, enddate=None, filename='reminder.ics'):
     from icalendar import Calendar, Event
@@ -21,10 +22,13 @@ def make_ical(startdate, summary, enddate=None, filename='reminder.ics'):
     import pytz
     event = Event()
     event.add('summary', summary)
-    event.add('dtstart', startdate)#datetime(2005,4,4,8,0,0,tzinfo=pytz.utc))
+    event.add('dtstart', startdate)
+              # datetime(2005,4,4,8,0,0,tzinfo=pytz.utc))
     if enddate:
-        event.add('dtend', enddate)#datetime(2005,4,4,10,0,0,tzinfo=pytz.utc))
-    event.add('dtstamp', datetime.now())#datetime(2005,4,4,0,10,0,tzinfo=pytz.utc))
+        event.add('dtend', enddate)
+                  # datetime(2005,4,4,10,0,0,tzinfo=pytz.utc))
+    event.add('dtstamp', datetime.now())
+              #datetime(2005,4,4,0,10,0,tzinfo=pytz.utc))
     event['uid'] = '20050115T101010/27346262376@mxm.dk'
     event.add('priority', 5)
 
@@ -36,11 +40,13 @@ def make_ical(startdate, summary, enddate=None, filename='reminder.ics'):
 
 
 class MailInterpreter(object):
+
     """Interprets Maluuba EMAIL_SEND actions"""
 
     def __init__(self, configfile):
         self.normalizer = rospy.ServiceProxy('maluuba/normalize', Normalize)
-        self.subscriber = rospy.Subscriber("/maluuba/interpretations", Interpretation, self.process_interpretation)
+        self.subscriber = rospy.Subscriber(
+            "/maluuba/interpretations", Interpretation, self.process_interpretation)
         self.mailadress = None
         self.password = None
         self.address_book = {}
@@ -49,11 +55,12 @@ class MailInterpreter(object):
 
     def configure(self, configfile):
         config = list(yaml.load_all(configfile))
-        
+
         account = config[0]
         address_book = config[1]
 
-        self.address_book = dict([(name,value['email']) for name, value in address_book.iteritems()])
+        self.address_book = dict([(name, value[
+                                 'email']) for name, value in address_book.iteritems()])
 
         self.mailadress = account["sender"]
         self.password = account["password"]
@@ -72,7 +79,7 @@ class MailInterpreter(object):
         # Create a text/plain message
 
         msg = MIMEMultipart()
-        msg.attach( MIMEText(message) )
+        msg.attach(MIMEText(message))
         msg['Subject'] = subject
         msg['From'] = self.mailadress
         msg['To'] = receivers[0]
@@ -82,48 +89,83 @@ class MailInterpreter(object):
         s.login(self.mailadress, self.password)
 
         for f, (mimeapp, mimecontent) in attachments.iteritems():
-            part = MIMEBase(mimeapp, mimecontent)#MIMEBase('application', "octet-stream")
-            part.set_payload( open(f,"rb").read() )
+            part = MIMEBase(
+                mimeapp, mimecontent)  # MIMEBase('application', "octet-stream")
+            part.set_payload(open(f, "rb").read())
             Encoders.encode_base64(part)
-            part.add_header('Content-Disposition', 'attachment; filename="%s"' % os.path.basename(f))
+            part.add_header(
+                'Content-Disposition', 'attachment; filename="%s"' % os.path.basename(f))
             msg.attach(part)
 
         s.sendmail(self.mailadress, receivers, msg.as_string())
-        rospy.loginfo("Sending {0}, {1}, {2}".format(subject, message, receivers))
+        rospy.loginfo("Sending {0}, {1}, {2}".format(
+            subject, message, receivers))
         s.quit()
+
+    @staticmethod
+    def process_time(dt):
+        from dateutil import tz
+        from_zone = tz.gettz('America/Montreal')
+        to_zone = tz.gettz('Europe/Amsterdam')
+        dt = dt.replace(tzinfo=from_zone)
+        dt = dt.astimezone(to_zone)
+        return dt
+
+
+    def extract_times(self, entities, default_duration=timedelta(hours=1)):
+        #import ipdb; ipdb.set_trace()
+        if entities.time:
+            start = datetime.fromtimestamp(entities.time)
+            start = self.process_time(start)
+
+            end = start + default_duration
+
+            return start, end
+        if entities.timeRange.start and entities.timeRange.end:
+            start = datetime.fromtimestamp(entities.timeRange.start)
+            end = datetime.fromtimestamp(entities.timeRange.end)
+            return start, end
+        if entities.dateRange.start and entities.dateRange.end:
+            start = datetime.fromtimestamp(entities.dateRange.start)
+            end = datetime.fromtimestamp(entities.dateRange.end)
+            return start, end
+        else:
+            start = datetime.now()
+            end = start + default_duration
+            return start, end
+
+        
 
     def process_interpretation(self, msg):
         if msg.action == "EMAIL_SEND":
             subject = msg.entities.subject if msg.entities.subject else ""
             message = msg.entities.message if msg.entities.message else ""
-            receivers = set([self.address_book.get(contact.name.lower(), self.mailadress) for contact in msg.entities.contacts])
+            receivers = set([self.address_book.get(
+                contact.name.lower(), self.mailadress) for contact in msg.entities.contacts])
 
             self.sendmail(subject, message, list(receivers))
 
         elif msg.action == "REMINDER_SET":
-            receivers = [self.mailadress] #set([self.address_book.get(contact.name.lower(), self.mailadress) for contact in msg.entities.contacts])
-
+            receivers = [self.mailadress]
             
+            import re
+            words = re.findall(r"[\w']+", msg.phrase)
+            names = filter(lambda word: self.address_book.has_key(word.lower()), words) #Find names in the phrase that oalso occur in the adress book
+            receivers += list(set([self.address_book.get(name.lower(), self.mailadress) for name in names]))
+
             message = msg.entities.message if msg.entities.message else "reminder"
 
-            # from dateutil import parser
-            # normalized_time = self.normalizer(timestr, "TimeRange", "GMT+2")
-            import ipdb; ipdb.set_trace()
-            from dateutil import tz
-            start = datetime.fromtimestamp(msg.entities.time)
-            from_zone = tz.gettz('America/Montreal')
-            to_zone = tz.gettz('Europe/Amsterdam')
-            start = start.replace(tzinfo=from_zone)
-            start = start.astimezone(to_zone)
+            start, end = self.extract_times(msg.entities)
 
-            make_ical(start, message, filename='reminder.ics')
-            rospy.loginfo("Made iCAL with {0}, {1}".format(start, message))
-            #self.sendmail("Reminder", message, list(receivers), {'reminder.ics':("text", "calendar")})
+            make_ical(start, message, filename='reminder.ics', enddate=end)
+            rospy.loginfo("Made iCAL with ({0} --> {3}), {1}. Sending to {2}".format(start, message, list(receivers), end))
+            #self.sendmail("Reminder", message, list(receivers),{'reminder.ics':("text", "calendar")})
+
 
 if __name__ == "__main__":
     import sys
     rospy.init_node("interpret_email_send")
-    
+
     try:
         interpreter = MailInterpreter(open(sys.argv[1]))
     except IOError as e:

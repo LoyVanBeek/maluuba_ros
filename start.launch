@@ -1,7 +1,7 @@
 <launch>
-  <node name="maluuba" pkg="maluuba_ros" type="maluuba.py"  args="$(find maluuba_ros)/config/KEYFILE" output="screen"/>
-  <node name="listener" pkg="maluuba_ros" type="listen_and_interpret.py" output="screen"/>
-  <node name="mailer" pkg="maluuba_ros" type="interpret_email.py" args="$(find maluuba_ros)/config/mailconfig.yaml" output="screen"/>
+  <node name="maluuba" pkg="maluuba_ros" type="maluuba.py"  args="$(find maluuba_ros)/config/KEYFILE" output="screen" required="true"/>
+  <node name="listener" pkg="maluuba_ros" type="listen_and_interpret.py" output="screen" required="true"/>
+  <node name="mailer" pkg="maluuba_ros" type="interpret_email.py" args="$(find maluuba_ros)/config/mailconfig.yaml" output="screen" required="true"/>
   <!--
     Send commands via 
   rostopic pub /speech/output std_msgs/String "Send an email to janno about maluuba with the text maluuba rocks" \-\-once 

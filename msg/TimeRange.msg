@@ -1,2 +1,2 @@
-string start
-string end
+uint32 start
+uint32 end
